@@ -1,0 +1,122 @@
+﻿
+@page "/add-employee"
+@rendermode InteractiveServer
+@using BlazorCRUDWebApp.Models
+@inject BlazorCRUDWebApp.Services.IEmployeeService service
+@inject NavigationManager Navigation
+@using System.ComponentModel.DataAnnotations
+
+
+
+<h3>Добавить нового сотрудника</h3>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+ <div style="width: 300px;">
+
+
+
+<div class="mb-3">
+    <label for="Name" class="form-label">Имя</label>
+        <InputText 
+            @bind-Value="newName"
+            type="text" 
+            class="form-control" 
+            id="Name" />
+</div>
+
+
+<div class="mb-3">
+        <label for="Gender" class="form-label">Пол</label>
+        <InputSelect @bind-Value="newGender"
+                     type="text"
+                 class="form-control"
+                     id="Gender">
+        @foreach (var g in genders)
+        {
+            <option value="@g">@g</option>
+        }
+    </InputSelect>
+</div>
+
+
+<div class="mb-3">
+    <label for="birthYear" class="form-label">Год рождения</label>
+        <InputNumber 
+            TValue="int" 
+            class="form-control" 
+            id="birthYear" 
+            @bind-Value="birthdate"
+            min="1960"
+            max="2008" />
+</div>
+
+
+    <div class="mb-3">
+        <label for="Gender" class="form-label">Должность</label>
+        <InputSelect @bind-Value="newPosition"
+                     type="text"
+                     class="form-control"
+                     id="Gender">
+            @foreach (var p in positions)
+            {
+                <option value="@p">@p</option>
+            }
+        </InputSelect>
+    </div>
+
+
+    <div class="mb-3">
+        <label for="inputNumber" class="form-label">Зарплата</label>
+        <InputNumber TValue="double"
+                     @bind-Value="newSalary"
+                     class="form-control"
+                     id="salary"
+                     min="100000"
+                     max="1000000"
+                     step="1000" />
+    </div>
+
+</div>
+
+
+<button class="btn btn-secondary" @onclick="Cancel">Отмена</button>
+<button class="btn btn-primary" @onclick="InsertEmployee">Сохранение</button>
+
+
+
+
+
+@code {
+    Employee employeeModel = new();
+    private string newName = String.Empty;
+    private string newGender = String.Empty;
+    private int birthdate;
+    private string newPosition = String.Empty;
+    private double newSalary;
+    private string[] genders = ["male", "female"];
+    static List<string> positions = ["Manager", "Vendor", "Clerk", "Whore"];
+
+    private async Task InsertEmployee()
+    {
+        var employee = new Models.Employee
+        {
+            Id = Guid.NewGuid(),
+            Name = newName,
+            Gender = newGender,
+            Birthdate = birthdate,
+            Position = newPosition,
+            Salary = newSalary
+        };
+        await service.AddEmployee(employee);
+        Navigation.NavigateTo("/allemployees");
+        StateHasChanged();
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/allemployees");
+    }
+}

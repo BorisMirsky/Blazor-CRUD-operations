@@ -1,0 +1,88 @@
+﻿@page "/update/{id:guid}"
+@rendermode InteractiveServer
+@using BlazorCRUDWebApp.Models
+@inject BlazorCRUDWebApp.Services.IEmployeeService EmployeeService
+@inject NavigationManager Navigation
+
+
+
+<h3>Обновить данные пользователя</h3>
+
+@if (employee == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div style="width: 300px;">
+    <br/>
+    <div class="mb-3">
+        <label for="employeeName" class="form-label">Имя</label>
+        <input type="text" class="form-control" readonly id="employeeName" @bind="employee.Name" />
+    </div>
+
+    <br />
+
+    <div class="mb-3">
+        <label for="inputSelect" class="form-label">Должность</label>
+        <InputSelect 
+            @bind-Value="employee.Position"
+            multiple
+            class="form-control"
+            id="inputSelect"
+        >
+            @foreach (var pos in positions)
+            {
+                <option value="@pos">@pos</option>
+            }
+        </InputSelect>
+     </div>
+
+    <br />
+
+    <div class="mb-3">
+        <label for="inputNumber" class="form-label">Зарплата</label>
+        <InputNumber
+            @bind-Value="employee.Salary"
+            class="form-control"
+            id="inputNumber"
+            min="10000" 
+            max="1000000" 
+            step="1000"
+        />
+     </div>
+    </div>
+
+    <br />
+
+        <button class="btn btn-secondary" @onclick="Cancel">Отмена</button>
+        <button class="btn btn-primary" @onclick="UpdateEmployee">Сохранить</button>
+
+}
+
+@code {
+    [Parameter]
+    public Guid id { get; set; }
+
+    private static Models.Employee employee;
+
+    protected override async Task OnInitializedAsync()
+    {
+        employee = await EmployeeService.GetEmployee(id);
+    }
+
+    private async Task UpdateEmployee()
+    {
+        await EmployeeService.UpdateEmployee(employee.Id, 
+                                             employee.Position,
+                                             employee.Salary);
+        Navigation.NavigateTo("/allemployees");
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/allemployees");
+    }
+
+    static List<string> positions = ["Manager", "Vendor", "Clerk", "Whore"];
+}

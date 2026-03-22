@@ -1,0 +1,71 @@
+﻿@page "/club"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BlazorCRUDApp.Services.IClubService ClubService
+
+
+
+<h3>Все клубы</h3>
+
+@if (clubs == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Название клуба</th>
+                <th>Год основания</th>
+                <th>Страна</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var club in clubs)
+            {
+                <tr>
+                    <td>@club.ClubName</td>
+                    <td>@club.YearFounded</td>
+                    <td>@club.Country</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" @onclick="() => NavigateToUpdate(club.Id)">Обновить</button>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteClub(club.Id)">Удалить</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+<button class="btn btn-primary" @onclick="OpenAddClubModal">Add New Club</button>
+
+@code {
+    private List<Models.Club> clubs;
+
+    protected override async Task OnInitializedAsync()
+    {
+        clubs = await ClubService.GetClubs();
+
+    }
+
+    private void OpenAddClubModal()
+    {
+        Navigation.NavigateTo("/add-club");
+    }
+
+    private void NavigateToUpdate(Guid clubId)          
+    {
+        Navigation.NavigateTo($"/update/{clubId}");
+    }
+
+    private async Task DeleteClub(Guid clubId)      
+    {
+
+        await ClubService.DeleteClub(clubId);
+
+        clubs = await ClubService.GetClubs();
+    }
+}

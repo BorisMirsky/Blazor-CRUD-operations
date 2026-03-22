@@ -1,0 +1,164 @@
+﻿@page "/allemployees"
+
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject BlazorCRUDWebApp.Services.IEmployeeService EmployeeService
+@inject IJSRuntime JSRuntime
+@using BlazorCRUDWebApp.Models
+@using BlazorCRUDWebApp.Services
+@using System.Diagnostics
+
+
+
+<br />
+<br />
+<h3>Все сотрудники</h3>
+<br />
+<br />
+<div class="mb-3" style="width: 300px;">
+    <label for="inputSelect" class="form-label">Группировка сотрудников по должности</label>
+    <InputSelect 
+        class="form-control"
+        ValueExpression="@(() => employee.Position)"
+        Value="@employee.Position"
+        ValueChanged="@((string value) => GroupByPosition(value))"
+    >
+        @foreach (var pos in positions)
+        {
+            <option value="@pos" >@pos</option>
+        }
+    </InputSelect>
+    <br/><br/>
+    <label for="inputNumber" class="form-label">Сотрудники с зарплатой меньше чем</label>
+    <InputNumber 
+        class="form-control"
+        min="10000"
+        max="1000000"
+        step="1000" 
+        TValue="double"
+                 ValueExpression="@(() => employee.Salary)"
+                 Value="@employee.Salary"
+                 ValueChanged="@((double value) => GroupBySalary(value, "less"))" />
+    <br /><br />
+    <label for="inputNumber" class="form-label">Сотрудники с зарплатой больше чем</label>
+    <InputNumber class="form-control"
+                 min="10000"
+                 max="1000000"
+                 step="1000"
+                 TValue="double"
+                 ValueExpression="@(() => employee.Salary)"
+                 Value="@employee.Salary"
+                 ValueChanged="@((double value) => GroupBySalary(value, "greater"))" />
+</div>
+
+<br />
+<br />
+<br />
+<div><button class="btn btn-primary" @onclick="ResetSettings">Сброс настроек</button></div>
+<br />
+<br />
+<br />
+
+
+<div style="width: 800px;">
+<PaginationComponent TItem="Employee" Items="employees" DefaultPageSize="10">
+    <ChildContentHeader>
+            <thead style="padding: 10px;">
+            <tr>
+                    <th style="padding: 20px;">Имя</th>
+                    <th style="padding: 20px;">Год рождения</th>
+                    <th style="padding: 20px;">Пол</th>
+                    <th style="padding: 20px;">Должность</th>
+                    <th style="padding: 20px;">Зарплата</th>
+                    <th style="padding: 20px;"></th>
+                    <th style="padding: 20px;"></th>
+            </tr>
+        </thead>
+    </ChildContentHeader>
+    <ChildContentRow Context="Employee">
+            <tbody>
+                <tr>
+                    <td style="padding: 10px;">@Employee.Name</td>
+                    <td style="padding: 10px;">@Employee.Gender</td>
+                    <td style="padding: 10px;">@Employee.Birthdate</td>
+                    <td style="padding: 10px;">@Employee.Position</td>
+                    <td style="padding: 10px;">@Employee.Salary</td>
+                    <td style="padding: 10px;">
+                        <button class="btn btn-warning btn-sm" @onclick="() => NavigateToUpdate(Employee.Id)">
+                            Изменить
+                        </button>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" @onclick="() => DeleteEmployee(Employee.Id)">
+                            Удалить
+                        </button>
+                    </td>
+                </tr>
+        </tbody>
+    </ChildContentRow>
+</PaginationComponent>
+</div>
+
+
+
+<br />
+<br />
+<br />
+<button class="btn btn-primary" @onclick="OpenAddEmployee">Add New Employee</button>
+<br />
+<br />
+<br />
+<br />
+<br />
+
+
+@code {
+
+    Employee employee = new();
+
+    List<string> positions = ["manager", "vender", "clerk", "Manager", "Vendor", "Clerk", "Whore"];
+
+    private List<Models.Employee>? employees;
+
+    protected override async Task OnInitializedAsync()
+    {
+        employees = await EmployeeService.GetEmployees();
+    }
+
+    private void OpenAddEmployee()
+    {
+        Navigation.NavigateTo("/add-employee");
+    }
+
+    private void NavigateToUpdate(Guid id)
+    {
+        Navigation.NavigateTo($"/update/{id}");
+    }
+
+    private async Task DeleteEmployee(Guid id)
+    {
+        Employee employee = await EmployeeService.GetEmployee(id);
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", $"Вы уверены, что хотите удалить пользователя '{employee.Name}' ?"))
+            return;
+        await EmployeeService.DeleteEmployee(id);
+        employees = await EmployeeService.GetEmployees();
+    }
+
+    private async Task GroupByPosition(string pos)
+    {
+        employees = await EmployeeService.GroupEmployees(pos);
+    }
+
+
+    private async Task GroupBySalary(double value, string sign)
+    {
+        employees = await EmployeeService.OrderEmployees(value, sign);
+    }
+
+    
+    private async Task ResetSettings()
+    {
+        employees = await EmployeeService.GetEmployees();
+    }
+}
+
